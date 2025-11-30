@@ -118,7 +118,7 @@
 <body>
   <div id="root"></div>
   <script type="text/babel" data-presets="env,react">
-    const { useState } = React;
+    const { useState, useRef } = React;
 
     const TASKS = [
       "まずは手洗い・うがい！ガラガラ〜！",
@@ -140,7 +140,28 @@
       "次の日に着る服を用意しておこう！",
       "ハンカチとティッシュを洗濯カゴへ！",
       "タブレットや充電器を定位置に戻そう！",
-      "元気な声で「ただいま！」をもう一度言ってみよう！"
+      "元気な声で「ただいま！」をもう一度言ってみよう！",
+      "ランドセルの中身を全部出してほこりを払おう！",
+      "上靴をベランダで干してリフレッシュしよう！",
+      "給食袋の中身をチェックして足りない物を補充しよう！",
+      "連絡袋のプリントに目を通して大事な予定を確認しよう！",
+      "お道具箱の中身を整頓してピカピカにしよう！",
+      "体操服を洗濯カゴへ入れてボタンも外そう！",
+      "ノートの残りページを数えて新しいノートを準備しよう！",
+      "明日の天気を調べて持ち物を考えよう！",
+      "おこづかい帳に今日の使い道を書き足そう！",
+      "家族に今日一番うれしかったことを話そう！",
+      "観葉植物やお花にお水をあげて「ありがとう」を伝えよう！",
+      "ペットのごはんや水のチェックをしよう！",
+      "洗面所のタオルを新しいものに交換しよう！",
+      "テレビやゲームの時間割を自分で決めて書き出そう！",
+      "明日の目標を1つ紙に書いて壁に貼ろう！",
+      "自分の机の引き出しを1段だけ片付けよう！",
+      "お気に入りの文房具を並べて写真を撮ろう！",
+      "靴下のペアを探してきれいに畳もう！",
+      "家族に「お手伝いない？」と聞いてみよう！",
+      "カレンダーを見て今週の予定を書き込もう！",
+      "深呼吸を3回して軽くストレッチしよう！"
     ];
 
     const CAPSULE_COLORS = [
@@ -168,6 +189,34 @@
       const [rotation, setRotation] = useState(0);
       const [capsuleColor, setCapsuleColor] = useState(CAPSULE_COLORS[0]);
       const [shaking, setShaking] = useState(false);
+      const audioCtxRef = useRef(null);
+
+      const playSound = (frequency = 440, duration = 0.2, type = 'sine', volume = 0.15) => {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) {
+          return;
+        }
+        if (!audioCtxRef.current) {
+          audioCtxRef.current = new AudioContextClass();
+        }
+        const ctx = audioCtxRef.current;
+        if (ctx.state === 'suspended') {
+          ctx.resume();
+        }
+
+        const oscillator = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+        oscillator.type = type;
+        oscillator.frequency.value = frequency;
+        gainNode.gain.value = volume;
+
+        oscillator.connect(gainNode);
+        gainNode.connect(ctx.destination);
+
+        oscillator.start();
+        gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+        oscillator.stop(ctx.currentTime + duration);
+      };
 
       const handleTurn = () => {
         if (gameState !== 'idle') {
@@ -176,6 +225,7 @@
 
         setGameState('cranking');
         setShaking(true);
+        playSound(420, 0.3, 'sawtooth', 0.22);
         const randomTask = TASKS[Math.floor(Math.random() * TASKS.length)];
         const randomColor = CAPSULE_COLORS[Math.floor(Math.random() * CAPSULE_COLORS.length)];
         setCurrentTask(randomTask);
@@ -198,7 +248,11 @@
         }
 
         setGameState('opening');
-        setTimeout(() => setGameState('result'), 800);
+        playSound(660, 0.2, 'triangle', 0.2);
+        setTimeout(() => {
+          setGameState('result');
+          playSound(1040, 0.35, 'sine', 0.18);
+        }, 800);
       };
 
       const resetGame = () => {
